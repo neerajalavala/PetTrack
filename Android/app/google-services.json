@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "950569995463",
+    "firebase_url": "https://mila-tracker-c92c8-default-rtdb.firebaseio.com",
+    "project_id": "mila-tracker-c92c8",
+    "storage_bucket": "mila-tracker-c92c8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950569995463:android:927c4302aee258dbef82e2",
+        "android_client_info": {
+          "package_name": "com.example.mila_tracker_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "950569995463-f5mal8fe09qqg8n9lapm6ek98i2kd84n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0Mrti_tYv2U4_2MnZiazlNcBd80XiRIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "950569995463-f5mal8fe09qqg8n9lapm6ek98i2kd84n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
