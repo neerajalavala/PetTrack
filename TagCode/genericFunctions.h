@@ -3,7 +3,7 @@
 
 void setCurrentConfigs()
 {
-    DW1000.setDefaults();
+    DW1000.setDefaults_longMsg();
 }
 
 void any_msg_set_ts(uint8_t *ts_field, uint64_t ts) {

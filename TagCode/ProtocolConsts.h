@@ -38,7 +38,8 @@
 #define POLL_MSG_POLL_RESP_ORDER_IDX 12 //sets responder schedule
 //#define POLL_MSG_POLL_SELF_LOCATION_X 20 //broadcasts its own location
 //#define POLL_MSG_POLL_SELF_LOCATION_Y 24 //broadcasts its own location
-#define POLL_MSG_IMU_DATA_IDX 19
+#define POLL_MSG_IMU_DATA_IDX 20
+#define POLL_MSG_IMU_NUM_IDX 19
 
 #define FINAL_MSG_FINAL_TX_TS_IDX 6
 #define FINAL_MSG_RESP_IDX 12
@@ -77,6 +78,6 @@ typedef enum send_modes{SEND_IMMEDIATE, SEND_DELAY_FIXED, SEND_DELAY_BOARDID, SE
 
 #define TYPICAL_RX_TIMEOUT 60
 
-#define MAX_POLL_LEN 40
+#define MAX_POLL_LEN 340
 #define MAX_RESP_LEN 40
-#define MAX_FINAL_LEN 90
+#define MAX_FINAL_LEN 300

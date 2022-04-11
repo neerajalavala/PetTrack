@@ -91,6 +91,7 @@ class Ranging {
     void print_all_time_fast() {
       char buff[300];
       sprintf(buff, "Ra:%8f Da:%8f Rb:%8f Db:%8f ", Ra.getAsMicroSeconds(), Da.getAsMicroSeconds(), Rb.getAsMicroSeconds(), Db.getAsMicroSeconds());
+      Serial.print("Buff: ");
       Serial.println(buff);
 
     }

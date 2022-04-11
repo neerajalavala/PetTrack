@@ -343,50 +343,50 @@ void IMU_init()
 //Serial.println(analogRead(A4));
 //^ save this to an array like output_data
 
-void getIMUdata(float* output_data)
-{
-
-  //sensors_event_t accel;
-  //sensors_event_t gyro;
-  //sensors_event_t mag;
-  //sensors_event_t temp;
-  //icm.getEvent(&accel, &gyro, &temp, &mag);
-
-  //output_data[0]=float(accel.timestamp);
-  //output_data[1]=float(accel.acceleration.x);
-  //output_data[2]=float(accel.acceleration.y);
-  //output_data[3]=float(accel.acceleration.z);
-  //output_data[4]=float(gyro.gyro.x);
-  //output_data[5]=float(gyro.gyro.y);
-  //output_data[6]=float(gyro.gyro.z);
+//void getIMUdata(float* output_data)
+//{
 //
-//   sensors_event_t orientationEvent;
-//    bno.getEvent(&orientationEvent);
-
-    /* Display the floating point data */
-    output_data[0] = (float) millis(); //change this to millis
-//    Serial.print("accelormeter X: ");
-    output_data[1] = analogRead(A0); //change these to analog read.
-//    Serial.println(output_data[1]);
-//    Serial.print("\taccelormeter Y: ");
-    output_data[2] = analogRead(A1);
-//    Serial.println(output_data[2]);
-//    Serial.print("\taccelormeter Z: ");
-    output_data[3] = analogRead(A4);
-//    Serial.println(output_data[3]);
-//    Serial.println("");
-
-//    imu::Vector<3> accelormeter = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-      /* Display the floating point data */
-//    //Serial.print("accelormeter X: ");
-//    output_data[4] = accelormeter.x(); 
-//    //Serial.print("accelormeter Y: ");
-//    output_data[5] = accelormeter.y();
-//    //Serial.print("accelormeter Z: ");
-//    output_data[6] = accelormeter.z();
-//    //Serial.println("");
-
-}
+//  //sensors_event_t accel;
+//  //sensors_event_t gyro;
+//  //sensors_event_t mag;
+//  //sensors_event_t temp;
+//  //icm.getEvent(&accel, &gyro, &temp, &mag);
+//
+//  //output_data[0]=float(accel.timestamp);
+//  //output_data[1]=float(accel.acceleration.x);
+//  //output_data[2]=float(accel.acceleration.y);
+//  //output_data[3]=float(accel.acceleration.z);
+//  //output_data[4]=float(gyro.gyro.x);
+//  //output_data[5]=float(gyro.gyro.y);
+//  //output_data[6]=float(gyro.gyro.z);
+////
+////   sensors_event_t orientationEvent;
+////    bno.getEvent(&orientationEvent);
+//
+//    /* Display the floating point data */
+//    output_data[0] = (float) millis(); //change this to millis
+////    Serial.print("accelormeter X: ");
+//    output_data[1] = analogRead(A0); //change these to analog read.
+////    Serial.println(output_data[1]);
+////    Serial.print("\taccelormeter Y: ");
+//    output_data[2] = analogRead(A1);
+////    Serial.println(output_data[2]);
+////    Serial.print("\taccelormeter Z: ");
+//    output_data[3] = analogRead(A4);
+////    Serial.println(output_data[3]);
+////    Serial.println("");
+//
+////    imu::Vector<3> accelormeter = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+//      /* Display the floating point data */
+////    //Serial.print("accelormeter X: ");
+////    output_data[4] = accelormeter.x(); 
+////    //Serial.print("accelormeter Y: ");
+////    output_data[5] = accelormeter.y();
+////    //Serial.print("accelormeter Z: ");
+////    output_data[6] = accelormeter.z();
+////    //Serial.println("");
+//
+//}
 
 //void getIMUdata_old(float* output_data)
 //{
@@ -654,7 +654,7 @@ void handleError() {
   Serial.println("ERROR");
 
 }
-
+//TODO: what does RXTO mean??
 void handleRxTO() {
   RX_TO_COUNT++;
   Serial.println("RXTO");
@@ -798,9 +798,10 @@ void nchoosek(int n,int k, int* out)
 
 
 //float IMU_data[200];
-byte AccDataBuffer0[500];
-byte AccDataBuffer1[500];
-int ACC_BUFFER_SIZE = 500;
+byte AccDataBuffer0[300];
+byte AccDataBuffer1[300];
+int ACC_BUFFER_SIZE = 300;
+int ACC_DATA_COUNT = ACC_BUFFER_SIZE/10;
 int tc3BufferPointer = 0;
 int currentBufferFlag = 0;
 //indicates which buffer is ready to go (0 or 1); it's set to -1, if the code just started running and there isn't a buffer available to send
@@ -875,6 +876,7 @@ void loop() {
         if (received ) {
           received = false;
           byte2char(rx_packet, 24);
+          Serial.print("Rx Msg Char: ");
           Serial.println(rx_msg_char);
           if (rx_packet[0] == POLL_MSG_TYPE)
           {
@@ -899,6 +901,7 @@ void loop() {
           }else if(rx_packet[0]==PW_THRESH_MSG_ALL_TYPE)
           {
               pw_threshold = rx_packet[PW_THRESH_PW_IDX];
+              Serial.print("pw threshold: ");
               Serial.println(-(int)pw_threshold);
               receiver(60);
           }
@@ -922,6 +925,7 @@ void loop() {
               {
                 for(int i=0;i<num_initiators;i++)
                 {
+                  Serial.print("Anchor Message Initiator: ");
                   Serial.println(rx_packet[ANCHOR_MSG_INITIATOR_LIST_IDX+i]);
                   initiator_list[i] = rx_packet[ANCHOR_MSG_INITIATOR_LIST_IDX+i];                
                 }
@@ -994,12 +998,21 @@ void loop() {
 
         if(IMU_send_true)
         {
+          
           if (sendBufferReadyFlag == 0) {
+            Serial.println("send buffer 0");
             memcpy(&tx_poll_msg[POLL_MSG_IMU_DATA_IDX],&AccDataBuffer0,ACC_BUFFER_SIZE);
+            tx_poll_msg[POLL_MSG_IMU_NUM_IDX] = ACC_DATA_COUNT;
+            sendBufferReadyFlag = -1;
           } else if (sendBufferReadyFlag == 1){
+            Serial.println("send buffer 1");
             memcpy(&tx_poll_msg[POLL_MSG_IMU_DATA_IDX],&AccDataBuffer1,ACC_BUFFER_SIZE);
+            tx_poll_msg[POLL_MSG_IMU_NUM_IDX] = ACC_DATA_COUNT;
+            sendBufferReadyFlag = -1;
+          } else {
+            tx_poll_msg[POLL_MSG_IMU_NUM_IDX] = 0;
           }
-          sendBufferReadyFlag = -1;
+          
           
 //          Serial.println(IMU_data[4]);
 //        Serial.print(num_of_IMU_data);
@@ -1007,32 +1020,35 @@ void loop() {
 //        Serial.println(IMU_data[0]);
 
         //Serial.println(IMU_data[buffer_pointer-1]);   
-          for (int i=0;i<buffer_pointer;i++)
-          {
-            if(POLL_MSG_IMU_DATA_IDX+(i+1)*4<MAX_POLL_LEN)
-            {
-  //            Serial.print("Accessing:");
-  //            Serial.println(FINAL_MSG_IMU_DATA_IDX+(i+1)*4);
-//              memcpy(&tx_poll_msg[POLL_MSG_IMU_DATA_IDX+(i+1)*4],&IMU_data[i],sizeof(IMU_data[i]));
-            }
-          }
-          buffer_pointer=0;
+//          for (int i=0;i<buffer_pointer;i++)
+//          {
+//            if(POLL_MSG_IMU_DATA_IDX+(i+1)*4<MAX_POLL_LEN)
+//            {
+//  //            Serial.print("Accessing:");
+//  //            Serial.println(FINAL_MSG_IMU_DATA_IDX+(i+1)*4);
+////              memcpy(&tx_poll_msg[POLL_MSG_IMU_DATA_IDX+(i+1)*4],&IMU_data[i],sizeof(IMU_data[i]));
+//            }
+//          }
+//          buffer_pointer=0;
         }else{
           
-          float num_of_IMU_data = (float) 0;
-          memcpy(&tx_poll_msg[POLL_MSG_IMU_DATA_IDX],&num_of_IMU_data,sizeof(num_of_IMU_data));
+          //float num_of_IMU_data = (float) 0;
+          tx_poll_msg[POLL_MSG_IMU_NUM_IDX] = 0;
         }
         
         currentTime = get_time_u64();
 //        Serial.println("POLL MESSAGE:");
 //        show_packet_8B(tx_poll_msg);
-        FIXED_DELAY = 4;
+        Serial.print("size of poll: ");
+        Serial.println(sizeof(tx_poll_msg));
+        FIXED_DELAY = 6;
         generic_send(tx_poll_msg, sizeof(tx_poll_msg), POLL_MSG_POLL_TX_TS_IDX, SEND_DELAY_FIXED);
 
         current_state = STATE_RESP_EXPECTED;
 
         while (!sendComplete) {
         };
+        Serial.println("Send complete");
 
         current_time_us = get_time_us();
         sendComplete = false;
@@ -1071,7 +1087,7 @@ void loop() {
           {
 //            Serial.print(i);
 //            Serial.println("th to send");
-            FIXED_DELAY = i * 4 + 4;
+            FIXED_DELAY = i * 6 + 6;
             in_schedule = 1;
             break;
           }
@@ -1081,7 +1097,7 @@ void loop() {
         {
           if (first_time_flag)
           {
-            FIXED_DELAY = num_responder * 4 + 4;
+            FIXED_DELAY = num_responder * 6 + 6;
             first_time_flag = 1;
           }
           else {
@@ -1186,6 +1202,7 @@ void loop() {
           if(rx_packet[0]==PW_THRESH_MSG_ALL_TYPE)
           {
               pw_threshold = rx_packet[PW_THRESH_PW_IDX];
+              Serial.print("pw threshold 2: ");
               Serial.println(-(int)pw_threshold);
               received = false;
               receiver(60);
@@ -1194,7 +1211,7 @@ void loop() {
 
           if (rx_packet[DST_IDX] == myDevID && rx_packet[0] == RESP_MSG_TYPE) {
             
-//            Serial.println("Recieved response!");
+            Serial.println("Recieved response!");
             recvd_resp_seq = rx_packet[SEQ_IDX] +  ((uint16_t)rx_packet[SEQ_IDX + 1] << 8);
                       
             //Add the responding nodes as neighbors
@@ -1217,7 +1234,7 @@ void loop() {
             {
               current_state = STATE_RESP_EXPECTED;
               //Serial.println("back to STATE_RESP_EXPECTED");
-              receiver(10);
+              receiver(20);
             } else {
               current_state = STATE_FINAL_SEND;
               response_counter = 0;
@@ -1261,7 +1278,7 @@ void loop() {
         break;
       }
     case STATE_FINAL_SEND: {
-        // Serial.println("State: FINAL SEND");
+         Serial.println("State: FINAL SEND");
         neighbor.push_new((uint8_t)0);
         tx_final_msg[SRC_IDX] = myDevID;
         tx_final_msg[DST_IDX] = BROADCAST_ID;
@@ -1296,34 +1313,38 @@ void loop() {
         }
  
 ////        Serial.println(IMU_data[0]);
-        if(IMU_send_true)
+/*        if(IMU_send_true)
         {
         float num_of_IMU_data = (float) buffer_pointer;
         memcpy(&tx_final_msg[FINAL_MSG_IMU_DATA_IDX],&num_of_IMU_data,sizeof(num_of_IMU_data));
-//        Serial.print(num_of_IMU_data); // tag code uses this value
+        Serial.print("num of IMU data: ");
+        Serial.println(num_of_IMU_data); // tag code uses this value
 //        Serial.print("IMU:");
 //        Serial.println(IMU_data[0]);
 
         //Serial.println(IMU_data[buffer_pointer-1]);
-        for (int i=0;i<buffer_pointer;i++)
-        {
-          if(FINAL_MSG_IMU_DATA_IDX+(i+1)*4<MAX_FINAL_LEN)
-          {
-//            Serial.print("Accessing:");
-//            Serial.println(FINAL_MSG_IMU_DATA_IDX+(i+1)*4);
-//            memcpy(&tx_final_msg[FINAL_MSG_IMU_DATA_IDX+(i+1)*4],&IMU_data[i],sizeof(IMU_data[i]));
-          }
-        }
+//        for (int i=0;i<buffer_pointer;i++)
+//        {
+//          if(FINAL_MSG_IMU_DATA_IDX+(i+1)*4<MAX_FINAL_LEN)
+//          {
+////            Serial.print("Accessing:");
+////            Serial.println(FINAL_MSG_IMU_DATA_IDX+(i+1)*4);
+////            memcpy(&tx_final_msg[FINAL_MSG_IMU_DATA_IDX+(i+1)*4],&IMU_data[i],sizeof(IMU_data[i]));
+//          }
+//        }
 
         buffer_pointer=0;
         }else{
-        float num_of_IMU_data = (float) 0;
-        memcpy(&tx_final_msg[FINAL_MSG_IMU_DATA_IDX],&num_of_IMU_data,sizeof(num_of_IMU_data));
+          float num_of_IMU_data = (float) 0;
+          memcpy(&tx_final_msg[FINAL_MSG_IMU_DATA_IDX],&num_of_IMU_data,sizeof(num_of_IMU_data));
         }
-        FIXED_DELAY = 4;
+        */
+        FIXED_DELAY = 6;
         generic_send(tx_final_msg, MAX_FINAL_LEN, FINAL_MSG_FINAL_TX_TS_IDX, SEND_DELAY_FIXED);
+        Serial.println("Before send");
         while (!sendComplete);
         sendComplete = false;
+        Serial.println("Send complete");
 
         DW1000.getSystemTimestamp(currentDWTime);
         final_sent_time = currentDWTime.getTimestamp();
@@ -1331,8 +1352,10 @@ void loop() {
         if (next_init == myDevID)
         {
           current_state = STATE_IDLE;
+          Serial.println("Go to Idle");
         } else
         {
+          Serial.println("What the heck");
           current_state = STATE_RECEIVE;
           RECEIVE_TO_COUNT = 0;
           INITIATOR = 0;
@@ -1403,6 +1426,7 @@ void loop() {
             seq = rx_packet[SEQ_IDX] +  ((uint16_t)rx_packet[SEQ_IDX + 1] << 8);
             //seq = rx_packet[SEQ_IDX];
             uint8_t next_init = rx_packet[FINAL_MSG_NEXT_INIT_IDX];
+            Serial.print("Next Init: ");
             Serial.println(next_init);
 
             if (next_init == myDevID)
@@ -1472,6 +1496,7 @@ void loop() {
               {
                 for(int i=0;i<num_initiators;i++)
                 {
+                  Serial.print("anchor message initiator 2: ");
                   Serial.println(rx_packet[ANCHOR_MSG_INITIATOR_LIST_IDX+i]);
                   initiator_list[i] = rx_packet[ANCHOR_MSG_INITIATOR_LIST_IDX+i];                
                 }
@@ -1789,6 +1814,8 @@ void TC3_Handler()
     int accZ = analogRead(A4);
     if(!stopDataCollection) {
       if (currentBufferFlag == 0) {
+        Serial.println("currentBufferFlag == 0");
+
         AccDataBuffer0[tc3BufferPointer++] = (milliseconds >> (8*0)) & 0xff;
         AccDataBuffer0[tc3BufferPointer++] = (milliseconds >> (8*1)) & 0xff;
         AccDataBuffer0[tc3BufferPointer++] = (milliseconds >> (8*2)) & 0xff;
@@ -1799,7 +1826,11 @@ void TC3_Handler()
         AccDataBuffer0[tc3BufferPointer++] = (accY >> (8*1)) & 0xff;
         AccDataBuffer0[tc3BufferPointer++] = (accZ >> (8*0)) & 0xff;
         AccDataBuffer0[tc3BufferPointer++] = (accZ >> (8*1)) & 0xff;
+        Serial.print("Buffer Pointer: ");
+        Serial.println(tc3BufferPointer);
       } else {
+        Serial.println("currentBufferFlag == 1");
+
         AccDataBuffer1[tc3BufferPointer++] = (milliseconds >> (8*0)) & 0xff;
         AccDataBuffer1[tc3BufferPointer++] = (milliseconds >> (8*1)) & 0xff;
         AccDataBuffer1[tc3BufferPointer++] = (milliseconds >> (8*2)) & 0xff;
@@ -1810,10 +1841,16 @@ void TC3_Handler()
         AccDataBuffer1[tc3BufferPointer++] = (accY >> (8*1)) & 0xff;
         AccDataBuffer1[tc3BufferPointer++] = (accZ >> (8*0)) & 0xff;
         AccDataBuffer1[tc3BufferPointer++] = (accZ >> (8*1)) & 0xff;
+        Serial.print("Buffer Pointer: ");
+        Serial.println(tc3BufferPointer);
+
       }
     }
     
-    if (tc3BufferPointer == ACC_BUFFER_SIZE) {
+    if (tc3BufferPointer >= ACC_BUFFER_SIZE-1) {
+      Serial.println("Clear buffer");
+      Serial.print("Send Buffer Ready Flag: ");
+      Serial.println(sendBufferReadyFlag);
       if (sendBufferReadyFlag == -1) { //the data has been sent out on the UWB
         sendBufferReadyFlag = currentBufferFlag;
         currentBufferFlag = (currentBufferFlag + 1) % 2;
@@ -1822,6 +1859,8 @@ void TC3_Handler()
       } else {
         stopDataCollection = true;
       }
+      Serial.print("Buffer Pointer: ");
+      Serial.println(tc3BufferPointer);
     }
   }
 }

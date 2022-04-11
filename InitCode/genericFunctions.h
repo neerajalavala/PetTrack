@@ -3,7 +3,8 @@
 
 void setCurrentConfigs()
 {
-    DW1000.setDefaults();
+//    DW1000.setDefaults();
+DW1000.setDefaults_longMsg();
 }
 
 void any_msg_set_ts(uint8_t *ts_field, uint64_t ts) {
@@ -39,6 +40,7 @@ void generic_send(uint8_t *buffer_to_send, int buffer_size, int ts_index, int de
         }
     }
 
+    Serial.print("txDelay: :");
     Serial.println(txDelay);
     DW1000Time txTime;
     DW1000Time deltaTime = DW1000Time(txDelay, DW1000Time::MILLISECONDS);

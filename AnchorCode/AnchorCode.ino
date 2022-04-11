@@ -809,7 +809,7 @@ void loop() {
         currentTime = get_time_u64();
 //        Serial.println("POLL MESSAGE:");
 //        show_packet_8B(tx_poll_msg);
-        FIXED_DELAY = 4;
+        FIXED_DELAY = 6;
         generic_send(tx_poll_msg, sizeof(tx_poll_msg), POLL_MSG_POLL_TX_TS_IDX, SEND_DELAY_FIXED);
 
         current_state = STATE_RESP_EXPECTED;
@@ -854,7 +854,7 @@ void loop() {
           {
             Serial.print(i);
             Serial.println("th to send");
-            FIXED_DELAY = i * 4 + 4;
+            FIXED_DELAY = i * 6 + 6;
             in_schedule = 1;
             break;
           }
@@ -864,7 +864,7 @@ void loop() {
         {
           if (first_time_flag)
           {
-            FIXED_DELAY = num_responder * 4 + 4;
+            FIXED_DELAY = num_responder * 6 + 6;
             first_time_flag = 1;
           }
           else {
@@ -1078,7 +1078,7 @@ void loop() {
           any_msg_set_ts(&tx_final_msg[FINAL_MSG_RESP_RX_TS_IDX  + (i * FINAL_MSG_ONE_RESP_ENTRY)], deviceRespTs[i].respRxTime);
         }
 //        show_packet_8B(tx_final_msg);
-        FIXED_DELAY = 4;
+        FIXED_DELAY = 6;
         generic_send(tx_final_msg, MAX_FINAL_LEN, FINAL_MSG_FINAL_TX_TS_IDX, SEND_DELAY_FIXED);
         while (!sendComplete);
         sendComplete = false;

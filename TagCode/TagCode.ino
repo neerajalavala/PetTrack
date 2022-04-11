@@ -91,9 +91,11 @@ byte tx_final_msg[MAX_FINAL_LEN] = {FINAL_MSG_TYPE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 int response_counter = 0;
 int num_nodes = 3;
 
+#define msg_len 700
+
 int packet_count = 1;
 
-char rx_msg_char[200];
+char rx_msg_char[msg_len];
 
 Ranging thisRange[15];
 float anchor_fp_pw[15];
@@ -102,8 +104,12 @@ uint32_t ToA_mat[15][15];
 
 int anchors[30][2];
 
-byte rx_packet[200];
+byte rx_packet[MAX_POLL_LEN];
 uint8_t myAcc[1000];
+
+int ACC_BUFFER_SIZE = 300;
+int ACC_DATA_COUNT = ACC_BUFFER_SIZE/10;
+
 
 typedef enum states {STATE_IDLE, STATE_POLL, STATE_RESP_EXPECTED, STATE_FINAL_SEND, STATE_TWR_DONE, STATE_RESP_SEND, STATE_FINAL_EXPECTED, STATE_OTHER_POLL_EXPECTED, STATE_RESP_PENDING, STATE_DIST_EST_EXPECTED, STATE_DIST_EST_SEND, STATE_TIGHT_LOOP,
                      STATE_RECEIVE, STATE_PRESYNC, STATE_SYNC, STATE_ANCHOR, STATE_TAG, STATE_FIRST_START, STATE_OBLIVION, STATE_ACK_EXPECTED
@@ -114,6 +120,13 @@ unsigned long silenced_at = 0;
 long randNumber;
 int currentSlots = 8;
 int myDevID = INITIATOR ? 0 : INITIATOR + 1;
+
+typedef struct Acc_Data {
+  long timestamp;
+  int acc_x;
+  int acc_y;
+  int acc_z;
+};
 
 //Timer for implementing timeouts
 #define CPU_HZ 48000000
@@ -177,16 +190,16 @@ void receiver(uint16_t rxtoval = 0 ) {
 }
 
 
-void receiver_perm(void ) {
-  received = false;
-  DW1000.newReceive();
-  DW1000.setDefaults();
-  // we cannot don't need to restart the receiver manually
-  DW1000.receivePermanently(true);
-
-  DW1000.startReceive();
-  //Serial.println("Started Receiver");
-}
+//void receiver_perm(void ) {
+//  received = false;
+//  DW1000.newReceive();
+//  DW1000.setDefaults();
+//  // we cannot don't need to restart the receiver manually
+//  DW1000.receivePermanently(true);
+//
+//  DW1000.startReceive();
+//  //Serial.println("Started Receiver");
+//}
 
 void setup() {
   pinMode(LED_PIN, OUTPUT);
@@ -393,7 +406,7 @@ void handleReceived() {
 
   DW1000.getData(rx_packet, DW1000.getDataLength());
 
-  //  Serial.println("Received something...");
+    Serial.println("Received something...");
   received = true;
   //  show_packet_8B(rx_packet);
 
@@ -541,19 +554,22 @@ void my_generic_receive(void)
 
   if (received)
   {
-
+//    Serial.print("Rx, i=0: ");
+//    Serial.println(rx_packet[0]);
     received = false;
-
+//    byte2char(rx_packet, MAX_POLL_LEN);
+//      Serial.println(rx_msg_char);
     //    receiver(0);
 
 
     if (rx_packet[0] == POLL_MSG_TYPE)
     {
+      Serial.println("Poll received");
       DW1000Time rxTS;
       DW1000.getReceiveTimestamp(rxTS);
       receiver(0);
       CIR_count = 0;
-      byte2char(rx_packet, 40);
+      byte2char(rx_packet, 30);
       Serial.println(rx_msg_char);
       seq = rx_packet[SEQ_IDX] +  ((uint16_t)rx_packet[SEQ_IDX + 1] << 8);
       //      char buff[50];
@@ -586,28 +602,38 @@ void my_generic_receive(void)
       previous_INIT = currentDeviceIndex;
 
 
-      float IMU_data[200];
-      float num_of_IMU_data;
-      memcpy(&num_of_IMU_data, &rx_packet[POLL_MSG_IMU_DATA_IDX], sizeof(float));
+      //float IMU_data[200];
+      //float num_of_IMU_data;
+      //TODO: why is num IMU data a float?
+      int num_of_IMU_data;
+      num_of_IMU_data = rx_packet[POLL_MSG_IMU_NUM_IDX];
 
 //      Serial.println((int)num_of_IMU_data * sizeof(float));
-      if (num_of_IMU_data > 0)
+      struct Acc_Data currentAcc_Data[ACC_DATA_COUNT];
+      if (num_of_IMU_data>0)
       {
-        memcpy(IMU_data, &rx_packet[POLL_MSG_IMU_DATA_IDX + 4], (int)num_of_IMU_data * sizeof(float));
+        //while ((num_of_IMU_data--) > 0)
+        //{
+          memcpy(&currentAcc_Data, &rx_packet[POLL_MSG_IMU_DATA_IDX], sizeof(Acc_Data)*ACC_DATA_COUNT);
+        //}
       }
-      Serial.println(num_of_IMU_data);
-      char IMU_buff[500];
-      strcpy(IMU_buff, "POLL, ");
-      for (int i = 0; i < (int)num_of_IMU_data; i++)
-      {
-        char temp[30];
-        //          sprintf(temp, "t: %0.1f,  acc_x: %0.2f \n", IMU_data[7*i+1]);
-        sprintf(temp, "%0.4f, ", IMU_data[i] );
-        strcat(IMU_buff, temp);
-        if (i % 4 == 3 && i<num_of_IMU_data-1)
-          strcat(IMU_buff, "\nPOLL, ");
-      }
-      Serial.println(IMU_buff);
+      
+//      byte2char(rx_packet, 30);
+//      Serial.println(rx_msg_char);
+      
+      //Serial.println(num_of_IMU_data);
+//      char IMU_buff[500];
+//      strcpy(IMU_buff, "POLL, ");
+//      for (int i = 0; i < (int)num_of_IMU_data; i++)
+//      {
+//        char temp[30];
+//        //          sprintf(temp, "t: %0.1f,  acc_x: %0.2f \n", IMU_data[7*i+1]);
+//        sprintf(temp, "%0.4f, ", IMU_data[i] );
+//        strcat(IMU_buff, temp);
+//        if (i % 4 == 3 && i<num_of_IMU_data-1)
+//          strcat(IMU_buff, "\nPOLL, ");
+//      }
+//      Serial.println(IMU_buff);
 
       uint64_t PollTxTime_64 = 0L;
       any_msg_get_ts(&rx_packet[POLL_MSG_POLL_TX_TS_IDX], &PollTxTime_64);
@@ -811,7 +837,7 @@ void my_generic_receive(void)
       //      sprintf(buff, "At %f ms, accX: %f m/s2",IMU_ts,IMU_acc_x);
       //      Serial.println(buff);
 
-      float IMU_data[200];
+      /*float IMU_data[200];
       float num_of_IMU_data;
       memcpy(&num_of_IMU_data, &rx_packet[FINAL_MSG_IMU_DATA_IDX], sizeof(float));
 
@@ -833,7 +859,7 @@ void my_generic_receive(void)
           strcat(IMU_buff, "\nFIN, ");
       }
       Serial.println(IMU_buff);
-
+*/
 
       //      byte2char(rx_packet, 60);
       //      Serial.println(rx_msg_char);
@@ -948,7 +974,7 @@ void show_packet_8B(byte packet[]) {
 void byte2char(byte packet[], int len) {
 
   const char * hex = "0123456789ABCDEF";
-  char msg[200];
+  char msg[msg_len];
   int i = 0;
   for (; i < len;) {
     msg[2 * i] = hex[packet[i] >> 4 & 0x0F];
