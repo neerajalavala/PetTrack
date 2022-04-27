@@ -6,6 +6,7 @@ from scipy.optimize import fsolve,root
 import serial, string, time
 import re
 import csv
+import pickle
 
 
 '''
@@ -75,7 +76,7 @@ c=0
 output = ""
 ser = serial.Serial('/dev/ttyACM0', 115200,timeout=5)
 # 3.54,3.24
-anchor_loc = np.array([[0,0],[3400,0],[3400,3400],[0,3400]])
+anchor_loc = np.array([[0,0],[8200,0],[8200,5400],[0,5400]])
 num_anchors = anchor_loc.shape[0]
 
 toa_vec = np.zeros(num_anchors)
@@ -83,7 +84,9 @@ current_id = 0
 current_ranging_id = 0
 tag_loc_buff = np.zeros((5,2))
 buff_pointer = 0
-for i in range(5000):
+Model = pickle.load(open('new_model.sav', 'rb'))
+label = 0
+while(True):
     output = ser.readline()
     #print(str(output,'UTF-8'))
     if(len(output)>5):
@@ -91,7 +94,18 @@ for i in range(5000):
         ans_IMU = parse_IMU(str(output,'UTF-8'))
         if(ans_IMU):
             #print("")
+            print("@@@@@@@@@")
             print(ans_IMU)
+            lst1 = [float(i[0:len(i)-1]) for i in [ans_IMU[1], ans_IMU[2],ans_IMU[3], ans_IMU[4],ans_IMU[5], ans_IMU[6]]]
+            lst1[0] = ((lst1[0]+180)/360) if lst1[0]<0 else (lst1[0]/360)
+            lst1[1] = ((lst1[1]+180)/360) if lst1[1]<0 else (lst1[1]/360)
+            lst1[2] = ((lst1[2]+180)/360) if lst1[2]<0 else (lst1[2]/360)
+            lst2=[lst1[0], lst1[1],lst1[2], lst1[3],lst1[4], lst1[5] ]
+            print(lst2)
+            print(lst1)
+            label = Model.predict([lst2])
+            print("$$$$")
+            print(label)
         if(ans):
             current_id,device_id,toa = ans[0],ans[1],ans[2]
             print("pkt ",current_id," device ",device_id," toa ",toa)
@@ -109,14 +123,17 @@ for i in range(5000):
                         tag_loc_avg = np.mean(tag_loc_buff, axis=0)
                         print(float(tag_loc.x[0]))
                         print(float(tag_loc.x[1]))
+                        print("$$$$$$$$$$$$$$$$")
+                        print(label[0])
                         data = {
                                 "ambient": tag_loc.x[0],
                                 "object": tag_loc.x[1],
+                                "label": int(label[0])
                               }
                         
                         
                         db.child("mlx90614").child("1-set").set(data)
-                        db.child("mlx90614").child("5-push").child("MSJDHJRTI").update(data)
+                        db.child("mlx90614").child("7-push").child("MHDRSTA").update(data)
 
 
 
