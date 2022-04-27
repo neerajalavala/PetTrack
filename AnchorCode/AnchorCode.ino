@@ -15,8 +15,6 @@
    limitations under the License.
 
    @file PeerProtocol_test01.ino
-
-
 */
 
 #include <SPI.h>
@@ -28,13 +26,11 @@
 #include "Neighbor.h"
 #include "Adafruit_LSM9DS1.h"
 #include <SdFat.h>
-
 //#include "sdios.h"
 #include <time.h>
 #include<TimeLib.h>
 #include "RTClib.h"
 #include<Wire.h>
-
 #define VBATPIN A2
 #define LED_PIN 12
 #define NOISE_PIN 11
@@ -47,12 +43,10 @@
 int packet_count = 1;
 int packet_type = 0;
 
-
 int AlarmNoise = 0;// = rx_packet[LED_IDX] & 0x01;
 int AlarmLed = 0;// = rx_packet[LED_IDX] & 0x02;
 
 #define INIT_RTC_ALWAYS 0
-
 #define SWITCH_INITIATOR 0
 #define PRINT_CIR 0
 #define USB_CONNECTION 0
@@ -65,12 +59,10 @@ byte imu_buffer[IMU_READINGS_MAX];
 #define IMU_SINGLE_READING_BUFF_SIZE 6
 int disable_imu = 1;
 //int chck =2390;
-
 #define DEBUG_PRINT 1
 // connection pins
 #define OUR_UWB_FEATHER 1
 #define AUS_UWB_FEATHER 0
-
 
 #if(OUR_UWB_FEATHER==1)
 const uint8_t PIN_RST = 9; // reset pin
@@ -337,8 +329,7 @@ void setup() {
   DW1000.attachSentHandler(handleSent);
   // start reception
 
-  if (INITIATOR == 0)
-  {
+  if (INITIATOR == 0) {
     disable_imu = 1;
     receiver(0);
   }
@@ -353,43 +344,13 @@ void setup() {
     timeout_time[i] = 0;
   }
 
-
-  //#if (INITIATOR == 1)
-  //Serial.println("Initiator");
-  //digitalWrite(DEV_INDICATOR_PIN, 1);
-  //delay(500);
-  //digitalWrite(DEV_INDICATOR_PIN, 0);
-  //delay(500);
-  //digitalWrite(DEV_INDICATOR_PIN, 1);
-  //delay(500);
-  //digitalWrite(DEV_INDICATOR_PIN, 0);
-  //delay(500);
-  //digitalWrite(DEV_INDICATOR_PIN, 1);
-  //delay(5000);
-  //digitalWrite(DEV_INDICATOR_PIN, 0);
-  ////delay(500);
-  //#else
-  //digitalWrite(DEV_INDICATOR_PIN, 1);
-  //delay(1000);
-  //digitalWrite(DEV_INDICATOR_PIN, 0);
-  //delay(500);
-  //digitalWrite(DEV_INDICATOR_PIN, 1);
-  //delay(200);
-  //digitalWrite(DEV_INDICATOR_PIN, 0);
-  //delay(500);
-  //digitalWrite(DEV_INDICATOR_PIN, 1);
-  //delay(500);
-  //digitalWrite(DEV_INDICATOR_PIN, 0);
-  //#endif
-
   if (INITIATOR)
   {
 
-    while (!lsm.begin())
-    {
+    while (!lsm.begin()) {
       Serial.println("Oops ... unable to initialize the LSM9DS1. Check your wiring!");
       delay(1000);
-#if IGNORE_IMU==1
+#if   IGNORE_IMU==1
       disable_imu = 1;
       break;
 #endif
@@ -417,16 +378,13 @@ void setup() {
   //#endif
 
   //startTimer(100);
-
 }
-
 
 void handleSent() {
   // status change on sent success
   sendComplete = true;
   //Serial.println("Send complete");
 }
-
 
 void handleReceived() {
   RX_TO_COUNT = 0;
@@ -435,48 +393,35 @@ void handleReceived() {
   DW1000.getData(rx_packet, DW1000.getDataLength());
   //  Serial.println("Received something...");
   received = true;
-  
-//  byte2char(rx_packet, 24);
-//  Serial.println(rx_msg_char);
-
-
+  byte2char(rx_packet, 24);
+  Serial.println(rx_msg_char);
 }
 
 void handleError() {
-  if (current_state == STATE_RECEIVE)
-  {
+  if (current_state == STATE_RECEIVE) {
     current_state = STATE_RECEIVE;
-  } else if(current_state == STATE_ANCHOR)
-  {
+  } else if(current_state == STATE_ANCHOR) {
     current_state = STATE_ANCHOR;
-  }
-  else {
+  } else {
     current_state = STATE_IDLE;
   }
   RxTimeout = true;
   error = true;
   Serial.println("ERROR");
-
 }
 
 void handleRxTO() {
   RX_TO_COUNT++;
   Serial.println("RXTO");
-  if (current_state == STATE_RESP_EXPECTED)
-  {
+  if (current_state == STATE_RESP_EXPECTED) {
     current_state = STATE_FINAL_SEND;
-  }
-  else if (current_state == STATE_RESP_EXPECTED)
-  {
+  } else if (current_state == STATE_RESP_EXPECTED) {
     current_state = STATE_RESP_EXPECTED;
-  }else if(current_state == STATE_ANCHOR)
-  {
+  } else if (current_state == STATE_ANCHOR) {
     current_state = STATE_ANCHOR;
-  }
-  else {
+  } else {
     current_state = STATE_IDLE;
   }
-
   RxTimeout = true;
 #if (DEBUG_PRINT==1)
 //  Serial.println("Rx Timeout");
@@ -689,8 +634,6 @@ void loop() {
         }
         if (received ) {
           received = false;
-          byte2char(rx_packet, 24);
-          Serial.println(rx_msg_char);
           if (rx_packet[0] == POLL_MSG_TYPE)
           {
 //            packet_count++;
@@ -703,6 +646,7 @@ void loop() {
             }
 
             thisRange.initialize();
+            Serial.println("Setting state from IDLE to STATE_RESP_SEND");
             current_state = STATE_RESP_SEND;
 
 #if (DEBUG_PRINT==1)
@@ -829,7 +773,7 @@ void loop() {
     case STATE_RESP_SEND: {
 
         //uint8_t current_poll_rand = rx_packet[POLL_MSG_RAND_BOUND_IDX];
-//        Serial.println("State: RESP SEND");
+        Serial.println("State: RESP SEND");
 
         seq = rx_packet[SEQ_IDX] +  ((uint16_t)rx_packet[SEQ_IDX + 1] << 8);
 
@@ -856,16 +800,20 @@ void loop() {
             Serial.println("th to send");
             FIXED_DELAY = i * 6 + 6;
             in_schedule = 1;
+            first_time_flag = 0; //flipped the flag so that first_time code is not run again
             break;
           }
         }
-
+        //TODO: how to deal with lost packets where the device ID of the current device is not found in the poll message? where do you reset the first_time_flag?
+        Serial.print("in_schedule: ");
+        Serial.println(in_schedule);
         if (in_schedule == 0)
         {
           if (first_time_flag)
           {
-            FIXED_DELAY = num_responder * 6 + 6;
-            first_time_flag = 1;
+            Serial.println("First time!");
+            //changed from num_responder to myDevID - predefining the order
+            FIXED_DELAY = myDevID * 6 + 6;
           }
           else {
             current_state = STATE_IDLE;
@@ -908,7 +856,7 @@ void loop() {
         any_msg_set_ts(&rx_resp_msg[RESP_MSG_PREV_DB_IDX], Db_u64);
         any_msg_set_ts(&rx_resp_msg[RESP_MSG_PREV_RB_IDX], Rb_u64);
 //        show_packet_8B(rx_resp_msg);
-
+        Serial.println("Sending Response ...");
         generic_send(rx_resp_msg, sizeof(rx_resp_msg), POLL_MSG_POLL_TX_TS_IDX, SEND_DELAY_FIXED);
 
         while (!sendComplete);
@@ -917,7 +865,7 @@ void loop() {
         DW1000.getTransmitTimestamp(txTS);
         thisRange.RespTxTime = txTS;
 
-        //Serial.println("Response sent");
+        Serial.println("Response sent");
         receiver(0);
         current_state = STATE_FINAL_EXPECTED;
         break;
@@ -1161,7 +1109,7 @@ void loop() {
             seq = rx_packet[SEQ_IDX] +  ((uint16_t)rx_packet[SEQ_IDX + 1] << 8);
             //seq = rx_packet[SEQ_IDX];
             uint8_t next_init = rx_packet[FINAL_MSG_NEXT_INIT_IDX];
-            Serial.println(next_init);
+//            Serial.println(next_init);
 
             if (next_init == myDevID)
             {
@@ -1169,7 +1117,7 @@ void loop() {
               ranging_count = 0;
             } else {
               INITIATOR = 0;
-              receiver(60); //Enable the receiver quickly to allow the next POLL to work
+              receiver(); //Enable the receiver quickly to allow the next POLL to work
             }
 
             thisRange.FinalTxTime = DW1000Time((int64_t)FinalTxTime_64);
@@ -1181,6 +1129,7 @@ void loop() {
             sprintf(buf, "Packet%d  Dist:%d mm", recvd_resp_seq, dist);
             Serial.println(buf);
 
+/* temporarily commented out - don't delete
             if (dist > 0 && dist < 40000) //only keep value between 0 and 40m
             {
               if (SDEnabled)
@@ -1199,19 +1148,19 @@ void loop() {
                   filenum++;
                   sprintf(filename, "dist%03d.txt", filenum);
                   if (!store_distance.open(filename, O_WRITE | O_CREAT)) {
-//                    Serial.println("Could not create file");
+                    Serial.println("Could not create file");
                     delay(1000);
                   }
                 }
               }
             }
-
+**/
             current_state = STATE_IDLE;
 
           } else if (rx_packet[0] == POLL_MSG_TYPE) {
             current_state = STATE_IDLE;
             receiver(0);
-          }else if(rx_packet[0]==PW_THRESH_MSG_ALL_TYPE)
+          } else if(rx_packet[0]==PW_THRESH_MSG_ALL_TYPE)
           {
               pw_threshold = rx_packet[PW_THRESH_PW_IDX];
               //Serial.println(-(int)pw_threshold);
@@ -1221,25 +1170,25 @@ void loop() {
           else if(rx_packet[0]==ANCHOR_MSG_ALL_TYPE)
           {
               num_initiators = rx_packet[ANCHOR_MSG_NUM_INITIATOR_IDX];
-              if(num_initiators==0)
+              if (num_initiators==0)
               {
                 IN_INITIATOR_LIST = 1;
                 if(myDevID==0)
                   FIRST_INITIATOR = 1;
               }else
               {
-                for(int i=0;i<num_initiators;i++)
+                for (int i=0;i<num_initiators;i++)
                 {
 //                  Serial.println(rx_packet[ANCHOR_MSG_INITIATOR_LIST_IDX+i]);
                   initiator_list[i] = rx_packet[ANCHOR_MSG_INITIATOR_LIST_IDX+i];                
                 }
-                if(initiator_list[0]==myDevID)
+                if (initiator_list[0]==myDevID)
                   FIRST_INITIATOR=1;
                 else
                   FIRST_INITIATOR=0;
   
                   
-                if(is_in_initiator_list(myDevID))
+                if (is_in_initiator_list(myDevID))
                 {
 //                  Serial.println("I'm Initiator");
                   IN_INITIATOR_LIST = 1;
@@ -1420,8 +1369,9 @@ void byte2char(byte packet[], int len) {
   char msg[200];
   int i = 0;
   for (; i < len;) {
-    msg[2 * i] = hex[packet[i] >> 4 & 0x0F];
-    msg[2 * i + 1] = hex[packet[i] & 0x0F];
+    msg[3 * i] = hex[packet[i] >> 4 & 0x0F];
+    msg[3 * i + 1] = hex[packet[i] & 0x0F];
+    msg[3 * i + 2] = ' ';
     i = i + 1;
   }
   msg[2 * i] = '\0';

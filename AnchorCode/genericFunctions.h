@@ -38,7 +38,7 @@ void generic_send(uint8_t *buffer_to_send, int buffer_size, int ts_index, int de
             break;
         }
     }
-
+    Serial.print("txDelay: ");
     Serial.println(txDelay);
     DW1000Time txTime;
     DW1000Time deltaTime = DW1000Time(txDelay, DW1000Time::MILLISECONDS);
